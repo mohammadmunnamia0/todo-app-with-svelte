@@ -1,12 +1,25 @@
-<script>
+<script lang="ts">
 import '@picocss/pico/css/pico.min.css' 
 import Form from './form.svelte';
+
+ type Task = {
+    id:string,
+    title:string,
+    done:boolean,
+ }
+
  let message = "ToDo App";
+ let tasks = $state<Task[]>([]);
+
+ function addTask ( newTask:string ){
+    console.log(newTask)
+ }
+
 </script>
 
 <main>
 <h1>{message}</h1>
- <Form/>
+ <Form {addTask}/>
 </main>
 
 <style>
