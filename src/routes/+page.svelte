@@ -12,7 +12,12 @@ import Form from './form.svelte';
  let tasks = $state<Task[]>([]);
 
  function addTask ( newTask:string ){
-    console.log(newTask)
+    
+tasks.push({
+    id: crypto.randomUUID(),
+    title:newTask,
+    done:false,
+})
  }
 
 </script>
