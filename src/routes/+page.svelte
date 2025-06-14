@@ -12,7 +12,7 @@ import Form from './form.svelte';
  let tasks = $state<Task[]>([]);
 
  function addTask ( newTask:string ){
-    
+
 tasks.push({
     id: crypto.randomUUID(),
     title:newTask,
@@ -25,6 +25,11 @@ tasks.push({
 <main>
 <h1>{message}</h1>
  <Form {addTask}/>
+ {#each tasks as task}
+    <div>
+        <h1>{task.title}</h1>
+    </div>
+ {/each}
 </main>
 
 <style>
