@@ -1,24 +1,34 @@
 <script lang="ts">
+	// State for the new task input
 	let newTask = $state('');
 
-	let {
-		addTask
-	}: {
-		addTask: (newTask: string) => void;
-	} = $props(); //create the add task variable to show it on the home
+	// Props for component communication
+	let { addTask }: { addTask: (newTask: string) => void } = $props();
 
+	// Handle form submission
 	function formSubmitted(e: SubmitEvent) {
 		e.preventDefault();
-		console.log(newTask);
-		addTask(newTask);
-		newTask = ''; //reset the form after add the task
+		if (newTask.trim()) {
+			addTask(newTask);
+			newTask = ''; // Reset the form after adding the task
+		}
 	}
 </script>
 
-<form onsubmit={formSubmitted}>
-	<label for=""
-		>Task
-		<input type="newTask" bind:value={newTask} />
-	</label>
-	<button>Add</button>
+<!-- Task input form -->
+<form on:submit={formSubmitted}>
+	<div class="grid">
+		<input type="text" bind:value={newTask} placeholder="What needs to be done?" required />
+		<button type="submit">Add Task</button>
+	</div>
 </form>
+
+<style>
+	/* Grid layout for form elements */
+	.grid {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 1rem;
+		align-items: center;
+	}
+</style>
