@@ -1,74 +1,96 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import type { Task } from '$lib/types';
+	import { page } from '$app/stores';
+	import { writable, derived } from 'svelte/store';
+	import { get } from 'svelte/store';
 
-	const { data } = $props<{ data: PageData }>();
+	const filter = writable<'all' | 'active' | 'completed'>('all');
 
-	let filter = $state<'all' | 'active' | 'completed'>('all');
+	$: tasks = get(page).data.tasks as Task[];
 
-	let filteredTasks = $derived(
-		data.tasks.filter((task: Task) => {
-			if (filter === 'active') return !task.done;
-			if (filter === 'completed') return task.done;
+	const filteredTasks = derived([filter, page], ([$filter, $page]) => {
+		const tasks = $page.data.tasks as Task[];
+		return tasks.filter(task => {
+			if ($filter === 'active') return !task.done;
+			if ($filter === 'completed') return task.done;
 			return true;
-		})
-	);
+		});
+	});
 
-	let remainingCount = $derived(data.tasks.filter((task: Task) => !task.done).length);
+	const remainingCount = derived(filteredTasks, $filteredTasks =>
+		$filteredTasks.filter(task => !task.done).length
+	);
 </script>
 
-<main class="max-w-2xl mx-auto mt-10 p-6 bg-white rounded shadow space-y-6">
-	<h1 class="text-2xl font-bold text-gray-800">Todo App</h1>
+<main class="min-h-screen bg-gray-100 py-10 px-4">
+	<section class="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-md space-y-8">
+		<h1 class="text-3xl font-bold text-center text-gray-800">📝 Todo App</h1>
 
-	<!-- Form using SvelteKit form action -->
-	<form method="POST" action="?/addTask" class="flex gap-2">
-		<input
-			type="text"
-			name="newTask"
-			class="flex-grow border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-500"
-			placeholder="What needs to be done?"
-			required
-		/>
-		<button
-			type="submit"
-			class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+		<!-- Add Task Form -->
+		<form
+			method="POST"
+			action="?/addTask"
+			class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 shadow-sm focus-within:ring-2 focus-within:ring-blue-500 transition"
 		>
-			Add Task
-		</button>
-	</form>
-
-	<!-- Filter Buttons -->
-	<nav class="flex gap-2">
-		{#each ['all', 'active', 'completed'] as type}
-			{@const typedType = type as 'all' | 'active' | 'completed'}
+			<input
+				type="text"
+				name="newTask"
+				class="flex-grow bg-transparent placeholder-gray-500 text-gray-900 focus:outline-none text-sm px-2"
+				placeholder="Add a new task..."
+				required
+			/>
 			<button
-				class="px-4 py-1 border rounded text-sm transition"
-				class:border-blue-500={filter === typedType}
-				class:bg-blue-100={filter === typedType}
-				onclick={() => (filter = typedType)}
+				type="submit"
+				class="shrink-0 bg-blue-600 text-white text-sm px-4 py-2 rounded-md hover:bg-blue-700 active:scale-95 transition-transform"
 			>
-				{typedType[0].toUpperCase() + typedType.slice(1)}
+				Add
 			</button>
-		{/each}
-	</nav>
+		</form>
 
-	<!-- Task List -->
-	<ul class="space-y-2">
-		{#each filteredTasks as task (task.id)}
-			<li class="flex items-center justify-between bg-gray-50 p-2 rounded border">
-				<label class="flex items-center gap-2">
-					<input type="checkbox" checked={task.done} disabled class="accent-blue-600" />
-					<span class:line-through={task.done} class:text-gray-400={task.done}>
-						{task.title}
-					</span>
-				</label>
-			</li>
-		{/each}
-	</ul>
+		<!-- Filters -->
+		<nav class="flex justify-center gap-3">
+			{#each ['all', 'active', 'completed'] as type}
+				{@const typedType = type as 'all' | 'active' | 'completed'}
+				<button
+					class="px-4 py-1 border rounded-full text-sm transition font-medium"
+					class:border-blue-500={$filter === typedType}
+					class:bg-blue-100={$filter === typedType}
+					on:click={() => filter.set(typedType)}
+				>
+					{typedType[0].toUpperCase() + typedType.slice(1)}
+				</button>
+			{/each}
+		</nav>
 
-	{#if data.tasks.length > 0}
-		<footer class="text-right text-sm text-gray-500">
-			{remainingCount} item(s) left
-		</footer>
-	{/if}
+		<!-- Task List -->
+		{#if $filteredTasks.length > 0}
+			<ul class="space-y-3">
+				{#each $filteredTasks as task (task.id)}
+					<li class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border hover:shadow-sm transition">
+						<form method="POST" action="?/toggleDone" class="flex items-center gap-3 w-full">
+							<input type="hidden" name="id" value={task.id} />
+							<input
+								type="checkbox"
+								checked={task.done}
+								on:change={e => e.currentTarget.form?.requestSubmit()}
+								class="accent-blue-600 w-5 h-5"
+							/>
+							<span class={`flex-grow text-sm ${task.done ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+								{task.title}
+							</span>
+						</form>
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<p class="text-center text-gray-400 text-sm">No tasks found for this filter.</p>
+		{/if}
+
+		<!-- Footer -->
+		{#if tasks.length > 0}
+			<footer class="text-right text-sm text-gray-500">
+				{$remainingCount} item(s) left
+			</footer>
+		{/if}
+	</section>
 </main>

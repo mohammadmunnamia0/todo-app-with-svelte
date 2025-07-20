@@ -21,5 +21,20 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+
+	toggleDone: async ({ request }) => {
+		const data = await request.formData();
+		const id = data.get('id')?.toString();
+
+		if (id) {
+			const task = tasks.find(t => t.id === id);
+			if (task) {
+				task.done = !task.done;
+			}
+		}
+
+		return { success: true };
 	}
 };
+
