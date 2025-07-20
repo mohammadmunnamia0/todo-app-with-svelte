@@ -7,7 +7,7 @@
 
 	const tasks = page.data.tasks as Task[];
 
-	const filteredTasks = derived([filter], ([$filter]) => {
+	const filteredTasks = derived([filter], ([$filter]: ['all' | 'active' | 'completed']) => {
 		const tasks = page.data.tasks as Task[];
 		return tasks.filter(task => {
 			if ($filter === 'active') return !task.done;
