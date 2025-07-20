@@ -1,15 +1,14 @@
 <script lang="ts">
 	import type { Task } from '$lib/types';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { writable, derived } from 'svelte/store';
-	import { get } from 'svelte/store';
 
 	const filter = writable<'all' | 'active' | 'completed'>('all');
 
-	$: tasks = get(page).data.tasks as Task[];
+	const tasks = page.data.tasks as Task[];
 
-	const filteredTasks = derived([filter, page], ([$filter, $page]) => {
-		const tasks = $page.data.tasks as Task[];
+	const filteredTasks = derived([filter], ([$filter]) => {
+		const tasks = page.data.tasks as Task[];
 		return tasks.filter(task => {
 			if ($filter === 'active') return !task.done;
 			if ($filter === 'completed') return task.done;
